@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -11,67 +11,78 @@ import {
 import {
   type BaseError,
   useWaitForTransactionReceipt,
-  useReadContract,
   useWriteContract,
-  useCapabilities,
-  useSendCalls,
   useAccount,
   useChainId,
   useConfig,
-  useWaitForCallsStatus,
-  useCallsStatus,
+  useBalance,
+  useReadContracts,
 } from "wagmi";
 import type { Token } from "@/types/token";
 import Image from "next/image";
-import { getTestnetMintParams, getTestnetMintParamsWithEip7702, type ValidTestnetChainInput } from "slpx-sdk";
-import { TOKEN_LIST, L2SLPX_CONTRACT_ADDRESS } from "@/lib/constants";
+import { TOKEN_LIST } from "@/lib/constants";
 import { useForm } from "@tanstack/react-form";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
-import { MintProps } from "@/types/shared";
-import { parseEther, formatEther, Address, maxUint256, erc20Abi } from "viem";
+import { parseEther, formatEther, Address, erc20Abi } from "viem";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { roundLongDecimals } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { TransactionStatus } from "@/components/transaction-status";
+import { vethAbi } from "@/lib/abis";
 
 const tokens: Token[] = TOKEN_LIST.filter(
   (token) => token.symbol === "vDOT" || token.symbol === "vETH"
 );
 
-export default function MintComponent({
-  nativeBalance,
-  tokenBalances,
-}: MintProps) {
+export default function MintComponent() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
-  const [open, setOpen] = useState(false);
   const config = useConfig();
   const chainId = useChainId();
   const { address } = useAccount();
-  const { data: availableCapabilities } = useCapabilities({
-    account: address,
-    chainId: chainId,
+
+  const {
+    data: nativeBalance,
+    isLoading: isLoadingNativeBalance,
+    isRefetching: isRefetchingNativeBalance,
+    refetch: refetchNativeBalance,
+  } = useBalance({
+    address: address,
   });
 
-  const { data: tokenAllowance, refetch: refetchTokenAllowance } =
-    useReadContract({
-      address: TOKEN_LIST.filter((token) => token.symbol === "DOT")[0]
-        .address as Address,
-      abi: erc20Abi,
-      functionName: "allowance",
-      args: [address as Address, L2SLPX_CONTRACT_ADDRESS],
-    });
+  const {
+    data: tokenBalances,
+  } = useReadContracts({
+    contracts: [
+      // DOT
+      {
+        abi: erc20Abi,
+        address: TOKEN_LIST.filter((token) => token.symbol === "DOT")[0]
+          .address as Address,
+        functionName: "balanceOf",
+        args: [address as Address],
+      },
+      // vETH
+      {
+        abi: erc20Abi,
+        address: TOKEN_LIST.filter((token) => token.symbol === "vETH")[0]
+          .address as Address,
+        functionName: "balanceOf",
+        args: [address as Address],
+      },
+      // vDOT
+      {
+        abi: erc20Abi,
+        address: TOKEN_LIST.filter((token) => token.symbol === "vDOT")[0]
+          .address as Address,
+        functionName: "balanceOf",
+        args: [address as Address],
+      },
+    ],
+  });
 
   const { data: hash, error, isPending, writeContract } = useWriteContract();
-
-  // Batching
-  const {
-    data: batchCallsId,
-    isPending: isBatching,
-    error: batchError,
-    sendCalls,
-  } = useSendCalls();
 
   const form = useForm({
     defaultValues: {
@@ -79,55 +90,12 @@ export default function MintComponent({
     },
     onSubmit: async ({ value }) => {
       if (selectedToken?.symbol === "vETH") {
-        writeContract(getTestnetMintParams(
-          "eth",
-          chainId as ValidTestnetChainInput,
-          value.amount,
-          "bifrost",
-        ));
-      }
-
-      if (selectedToken?.symbol === "vDOT") {
-        if (availableCapabilities?.atomic?.status === "supported") {
-          sendCalls({
-            calls: [
-              {
-                to: TOKEN_LIST.filter((token) => token.symbol === "DOT")[0]
-                  .address as Address,
-                abi: erc20Abi,
-                functionName: "approve",
-                args: [L2SLPX_CONTRACT_ADDRESS, parseEther(value.amount)],
-              },
-              getTestnetMintParamsWithEip7702(
-                "eth",
-                chainId as ValidTestnetChainInput,
-                value.amount,
-                "bifrost",
-              ),
-            ],
-          });
-        }
-
-        if (availableCapabilities?.atomic?.status !== "supported") {
-          if (tokenAllowance === BigInt(0)) {
-            writeContract({
-              address: TOKEN_LIST.filter((token) => token.symbol === "DOT")[0]
-                .address as Address,
-              abi: erc20Abi,
-              functionName: "approve",
-              args: [L2SLPX_CONTRACT_ADDRESS, maxUint256],
-            });
-          }
-
-          if (tokenAllowance && tokenAllowance >= parseEther(value.amount)) {
-            writeContract(getTestnetMintParams(
-              "dot",
-              chainId as ValidTestnetChainInput,
-              value.amount,
-              "bifrost"
-            ));
-          }
-        }
+        writeContract({
+          address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
+          abi: vethAbi,
+          functionName: "depositWithETH",
+          value: parseEther(value.amount),
+        });
       }
     },
   });
@@ -136,36 +104,6 @@ export default function MintComponent({
     useWaitForTransactionReceipt({
       hash,
     });
-
-  const { isLoading: isSendingCalls } = useWaitForCallsStatus({
-    id: batchCallsId?.id,
-  });
-
-  const {
-    data: batchCallsStatus,
-    isLoading: isBatchCallsLoading,
-    isSuccess: isBatchCallsSuccess,
-  } = useCallsStatus(
-    batchCallsId
-      ? {
-          id: batchCallsId.id,
-        }
-      : {
-          id: "",
-        }
-  );
-
-  useEffect(() => {
-    if (isConfirming || isSendingCalls) {
-      setOpen(true);
-    }
-  }, [isConfirming, isSendingCalls]);
-
-  useEffect(() => {
-    if (isConfirmed) {
-      refetchTokenAllowance();
-    }
-  }, [isConfirmed, refetchTokenAllowance]);
 
   return (
     <div className="flex flex-col gap-4 w-full p-4">
@@ -211,8 +149,8 @@ export default function MintComponent({
                       ? "Amount must be greater than 0"
                       : parseEther(value) >
                         (selectedToken?.symbol === "vETH"
-                          ? nativeBalance ?? BigInt(0)
-                          : tokenBalances?.[0] ?? BigInt(0))
+                          ? nativeBalance?.value ?? BigInt(0)
+                          : tokenBalances?.[0]?.result ?? BigInt(0))
                       ? "Amount must be less than or equal to your balance"
                       : undefined,
                 }}
@@ -263,7 +201,7 @@ export default function MintComponent({
                       {selectedToken?.symbol === "vETH" ? (
                         <p className="text-muted-foreground">
                           {roundLongDecimals(
-                            formatEther(nativeBalance ?? BigInt(0)),
+                            formatEther(nativeBalance?.value ?? BigInt(0)),
                             6
                           )}{" "}
                           ETH
@@ -271,7 +209,7 @@ export default function MintComponent({
                       ) : selectedToken?.symbol === "vDOT" ? (
                         <p className="text-muted-foreground">
                           {roundLongDecimals(
-                            formatEther(tokenBalances?.[0] ?? BigInt(0)),
+                            formatEther(tokenBalances?.[0]?.result ?? BigInt(0)),
                             6
                           )}{" "}
                           DOT
@@ -297,26 +235,15 @@ export default function MintComponent({
                 disabled={
                   !canSubmit ||
                   isSubmitting ||
-                  isPending ||
-                  isBatching ||
-                  isSendingCalls
+                  isPending
                 }
               >
-                {isSubmitting || isPending || isBatching ? (
+                {isSubmitting || isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Please confirm in wallet
                   </>
-                ) : isSendingCalls ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : availableCapabilities?.atomic?.status !== "supported" &&
-                  tokenAllowance === BigInt(0) &&
-                  selectedToken?.symbol === "vDOT" ? (
-                  <>Approve</>
-                ) : (
+                ) :  (
                   <>Mint</>
                 )}
               </Button>
@@ -325,15 +252,13 @@ export default function MintComponent({
         </div>
       </form>
       <TransactionStatus
-        hash={hash || batchCallsStatus?.receipts?.[0]?.transactionHash}
-        isPending={isPending || isSendingCalls}
-        isConfirming={isConfirming || isBatchCallsLoading}
-        isConfirmed={isConfirmed || isBatchCallsSuccess}
-        error={(error as BaseError) || (batchError as BaseError)}
+        hash={hash}
+        isPending={isPending}
+        isConfirming={isConfirming}
+        isConfirmed={isConfirmed}
+        error={error as BaseError}
         config={config}
         chainId={chainId}
-        open={open}
-        onOpenChange={setOpen}
       />
     </div>
   );

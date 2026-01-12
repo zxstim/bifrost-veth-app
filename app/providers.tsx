@@ -6,51 +6,34 @@ import {
   getDefaultWallets,
   getDefaultConfig,
 } from "@rainbow-me/rainbowkit";
-import { trustWallet, ledgerWallet } from "@rainbow-me/rainbowkit/wallets";
-import { sepolia, baseSepolia } from "wagmi/chains";
+import { trustWallet, ledgerWallet, injectedWallet } from "@rainbow-me/rainbowkit/wallets";
+import { mainnet, base, arbitrum, optimism } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, http } from "wagmi";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const { wallets } = getDefaultWallets();
 
-const paseoPassethub = {
-  id: 420420422,
-  name: "Paseo Passethub",
-  network: "paseo-passethub",
-  nativeCurrency: {
-    name: "PAS",
-    symbol: "PAS",
-    decimals: 18,
-  },
-  rpcUrls: {
-    default: {
-      http: ["https://testnet-passet-hub-eth-rpc.polkadot.io"],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "Blockscout",
-      url: "https://blockscout-passet-hub.parity-testnet.parity.io",
-    },
-  },
-} as const;
-
 const config = getDefaultConfig({
-  appName: "BIFROST_EVM_MINT", // Name your app
+  appName: "Bifrost SLPX App", // Name your app
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!, // Enter your WalletConnect Project ID here
   wallets: [
+    {
+      groupName: "Installed",
+      wallets: [injectedWallet],
+    },
     ...wallets,
     {
       groupName: "Other",
       wallets: [trustWallet, ledgerWallet],
     },
   ],
-  chains: [sepolia, baseSepolia, paseoPassethub],
+  chains: [mainnet, base, arbitrum, optimism],
   transports: {
-    [sepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL_SEPOLIA!),
-    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_RPC_URL_BASE_SEPOLIA!),
-    [paseoPassethub.id]: http(process.env.NEXT_PUBLIC_RPC_URL_PASEO_PASSETHUB!),
+    [mainnet.id]: http(process.env.NEXT_PUBLIC_RPC_URL_MAINNET!),
+    [base.id]: http(process.env.NEXT_PUBLIC_RPC_URL_BASE!),
+    [arbitrum.id]: http(process.env.NEXT_PUBLIC_RPC_URL_ARBITRUM!),
+    [optimism.id]: http(process.env.NEXT_PUBLIC_RPC_URL_OPTIMISM!),
   },
   ssr: true, // Because it is Nextjs's App router, you need to declare ssr as true
 });

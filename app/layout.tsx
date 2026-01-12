@@ -9,14 +9,14 @@ import Header from "@/components/header";
 const jetBrainsMono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bifrost Build Stack",
-  description: "A kit to build with Bifrost protocol",
-  metadataBase: new URL("https://bifrost.buildstack.org"),
+  title: "Bifrost SLPX App",
+  description: "A app to interact with Bifrost SLPX protocol",
+  metadataBase: new URL("https://slpx.zxstim.com"),
   openGraph: {
-    title: "Bifrost Build Stack",
-    description: "A kit to build with Bifrost protocol",
-    url: "https://bifrost.buildstack.org",
-    siteName: "Bifrost Build Stack",
+    title: "Bifrost SLPX App",
+    description: "A app to interact with Bifrost SLPX protocol",
+    url: "https://slpx.zxstim.com",
+    siteName: "Bifrost SLPX App",
     images: [
       {
         url: "/bifrost-full-mono.svg",
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bifrost Build Stack",
-    description: "A kit to build with Bifrost protocol",
+    title: "Bifrost SLPX App",
+    description: "A app to interact with Bifrost SLPX protocol",
     creator: "@zxstim",
     images: ["/bifrost-full-mono.svg"],
   },

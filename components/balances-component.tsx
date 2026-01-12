@@ -1,21 +1,67 @@
-import type { BalancesProps } from "@/types/shared";
+"use client";
+
 import Image from "next/image";
-import { useChainId } from "wagmi";
+import {
+  useChainId,
+  useAccount,
+  useBalance,
+  useReadContracts,
+  useChains,
+} from "wagmi";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatEther } from "viem";
+import { formatEther, erc20Abi, Address } from "viem";
 import { roundLongDecimals } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, Loader2 } from "lucide-react";
+import { TOKEN_LIST } from "@/lib/constants";
 
-export default function BalancesComponent({
-  nativeBalance,
-  isNativeBalanceLoading,
-  refetchNativeBalance,
-  tokenBalances,
-  isTokenBalancesLoading,
-  refetchTokenBalances,
-}: BalancesProps) {
+export default function BalancesComponent() {
   const chainId = useChainId();
+  const { address } = useAccount();
+  const chains = useChains();
+
+  const {
+    data: nativeBalance,
+    isLoading: isLoadingNativeBalance,
+    isRefetching: isRefetchingNativeBalance,
+    refetch: refetchNativeBalance,
+  } = useBalance({
+    address: address,
+  });
+
+  const {
+    data: tokenBalances,
+    isLoading: isTokenBalancesLoading,
+    isRefetching: isRefetchingTokenBalances,
+    refetch: refetchTokenBalances,
+  } = useReadContracts({
+    contracts: [
+      // DOT
+      {
+        abi: erc20Abi,
+        address: TOKEN_LIST.filter((token) => token.symbol === "DOT")[0]
+          .address as Address,
+        functionName: "balanceOf",
+        args: [address as Address],
+      },
+      // vETH
+      {
+        abi: erc20Abi,
+        address: TOKEN_LIST.filter((token) => token.symbol === "vETH")[0]
+          .address as Address,
+        functionName: "balanceOf",
+        args: [address as Address],
+      },
+      // vDOT
+      {
+        abi: erc20Abi,
+        address: TOKEN_LIST.filter((token) => token.symbol === "vDOT")[0]
+          .address as Address,
+        functionName: "balanceOf",
+        args: [address as Address],
+      },
+    ],
+  });
 
   async function handleRefetchAllBalances() {
     await refetchNativeBalance();
@@ -31,8 +77,13 @@ export default function BalancesComponent({
             className="hover:cursor-pointer"
             size="icon"
             onClick={handleRefetchAllBalances}
+            disabled={isRefetchingNativeBalance || isRefetchingTokenBalances}
           >
-            <RefreshCcw />
+            {isRefetchingNativeBalance || isRefetchingTokenBalances ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCcw className="w-4 h-4" />
+            )}
           </Button>
         </div>
         <p className="text-muted-foreground">Current wallet balances</p>
@@ -43,20 +94,18 @@ export default function BalancesComponent({
             <Image src="/eth.svg" alt="Ethereum" width={48} height={48} />
             <div className="flex flex-col">
               <p className="text-xl font-semibold">Ethereum</p>
-              {chainId === 11155111 ? (
-                <p className="text-muted-foreground">Sepolia</p>
-              ) : (
-                <p className="text-muted-foreground">Base Sepolia</p>
-              )}
+              <p className="text-muted-foreground">
+                {chains?.find((chain) => chain.id === chainId)?.name}
+              </p>
             </div>
           </div>
           <div className="flex flex-col text-right">
             <div className="text-xl">
-              {isNativeBalanceLoading ? (
+              {isLoadingNativeBalance ? (
                 <Skeleton className="w-12 h-4" />
               ) : (
                 roundLongDecimals(
-                  formatEther((nativeBalance as bigint) || BigInt(0)),
+                  formatEther(nativeBalance?.value ?? BigInt(0)),
                   6
                 )
               )}
@@ -69,11 +118,9 @@ export default function BalancesComponent({
             <Image src="/dot.svg" alt="Polkadot" width={48} height={48} />
             <div className="flex flex-col">
               <p className="text-xl font-semibold">Polkadot</p>
-              {chainId === 11155111 ? (
-                <p className="text-muted-foreground">Sepolia</p>
-              ) : (
-                <p className="text-muted-foreground">Base Sepolia</p>
-              )}
+              <p className="text-muted-foreground">
+                {chains?.find((chain) => chain.id === chainId)?.name}
+              </p>
             </div>
           </div>
           <div className="flex flex-col text-right">
@@ -82,7 +129,9 @@ export default function BalancesComponent({
                 <Skeleton className="w-12 h-4" />
               ) : (
                 roundLongDecimals(
-                  formatEther((tokenBalances?.[0] as bigint) || BigInt(0)),
+                  formatEther(
+                    tokenBalances?.[0]?.result ?? BigInt(0)
+                  ),
                   6
                 )
               )}
@@ -100,11 +149,9 @@ export default function BalancesComponent({
             />
             <div className="flex flex-col">
               <p className="text-xl font-semibold">Voucher ETH</p>
-              {chainId === 11155111 ? (
-                <p className="text-muted-foreground">Sepolia</p>
-              ) : (
-                <p className="text-muted-foreground">Base Sepolia</p>
-              )}
+              <p className="text-muted-foreground">
+                {chains?.find((chain) => chain.id === chainId)?.name}
+              </p>
             </div>
           </div>
           <div className="flex flex-col text-right">
@@ -113,7 +160,9 @@ export default function BalancesComponent({
                 <Skeleton className="w-12 h-4" />
               ) : (
                 roundLongDecimals(
-                  formatEther((tokenBalances?.[1] as bigint) || BigInt(0)),
+                  formatEther(
+                    tokenBalances?.[1]?.result ?? BigInt(0)
+                  ),
                   6
                 )
               )}
@@ -131,11 +180,9 @@ export default function BalancesComponent({
             />
             <div className="flex flex-col">
               <p className="text-xl font-semibold">Voucher DOT</p>
-              {chainId === 11155111 ? (
-                <p className="text-muted-foreground">Sepolia</p>
-              ) : (
-                <p className="text-muted-foreground">Base Sepolia</p>
-              )}
+              <p className="text-muted-foreground">
+                {chains?.find((chain) => chain.id === chainId)?.name}
+              </p>
             </div>
           </div>
           <div className="flex flex-col text-right">
@@ -144,7 +191,9 @@ export default function BalancesComponent({
                 <Skeleton className="w-12 h-4" />
               ) : (
                 roundLongDecimals(
-                  formatEther((tokenBalances?.[2] as bigint) || BigInt(0)),
+                  formatEther(
+                    tokenBalances?.[2]?.result ?? BigInt(0)
+                  ),
                   6
                 )
               )}

@@ -11,45 +11,15 @@ export default function Home() {
       <p className="text-muted-foreground text-2xl">
         A kit to build with Bifrost protocol
       </p>
-      <Button className="w-fit">
-        Get Started <ArrowRight />
+      <Button asChild>
+        <Link href="/mint" className="w-fit">
+          Mint <ArrowRight />
+        </Link>
       </Button>
       <div className="my-4 border-t border-dashed border-muted-foreground" />
       <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight">
         Components
       </h2>
-      <div className="flex flex-col gap-4">
-        <Link
-          href="/balances"
-          className="flex flex-row gap-2 items-center underline underline-offset-4 w-fit"
-        >
-          Balances Component <ArrowRight />
-        </Link>
-        <Link
-          href="/mint"
-          className="flex flex-row gap-2 items-center underline underline-offset-4 w-fit"
-        >
-          Mint Component <ArrowRight />
-        </Link>
-        <Link
-          href="/redeem"
-          className="flex flex-row gap-2 items-center underline underline-offset-4 w-fit"
-        >
-          Redeem Component <ArrowRight />
-        </Link>
-        <Link
-          href="/mint-redeem-component"
-          className="flex flex-row gap-2 items-center underline underline-offset-4 w-fit"
-        >
-          Mint and Redeem Component <ArrowRight />
-        </Link>
-        <Link
-          href="/yield-delegation-vault-component"
-          className="flex flex-row gap-2 items-center underline underline-offset-4 w-fit"
-        >
-          Yield Delegation Vault Component <ArrowRight />
-        </Link>
-      </div>
     </div>
   );
 }

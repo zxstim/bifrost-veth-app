@@ -1,9 +1,9 @@
 {
-  "name": "bifrost-ui-kit",
+  "name": "bifrost-slpx-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3006 --webpack",
+    "dev": "next dev --port 3006 --turbopack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint"
@@ -26,7 +26,7 @@
     "slpx-sdk": "0.0.16",
     "tailwind-merge": "^3.3.0",
     "vaul": "^1.1.2",
-    "viem": "^2.43.4",
+    "viem": "^2.43.5",
     "wagmi": "^2.19.5"
   },
   "devDependencies": {
