@@ -24,6 +24,7 @@ import { TOKEN_LIST } from "@/lib/constants";
 import { useForm } from "@tanstack/react-form";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { parseEther, formatEther, Address, erc20Abi } from "viem";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { roundLongDecimals } from "@/lib/utils";
@@ -31,9 +32,7 @@ import { Loader2 } from "lucide-react";
 import { TransactionStatus } from "@/components/transaction-status";
 import { vethAbi } from "@/lib/abis";
 
-const tokens: Token[] = TOKEN_LIST.filter(
-  (token) => token.symbol === "vDOT" || token.symbol === "vETH"
-);
+const tokens: Token[] = TOKEN_LIST;
 
 export default function MintComponent() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -53,28 +52,15 @@ export default function MintComponent() {
 
   const {
     data: tokenBalances,
+    isLoading: isLoadingTokenBalances,
+    isRefetching: isRefetchingTokenBalances,
+    refetch: refetchTokenBalances,
   } = useReadContracts({
     contracts: [
-      // DOT
-      {
-        abi: erc20Abi,
-        address: TOKEN_LIST.filter((token) => token.symbol === "DOT")[0]
-          .address as Address,
-        functionName: "balanceOf",
-        args: [address as Address],
-      },
       // vETH
       {
         abi: erc20Abi,
         address: TOKEN_LIST.filter((token) => token.symbol === "vETH")[0]
-          .address as Address,
-        functionName: "balanceOf",
-        args: [address as Address],
-      },
-      // vDOT
-      {
-        abi: erc20Abi,
-        address: TOKEN_LIST.filter((token) => token.symbol === "vDOT")[0]
           .address as Address,
         functionName: "balanceOf",
         args: [address as Address],
@@ -89,14 +75,15 @@ export default function MintComponent() {
       amount: "",
     },
     onSubmit: async ({ value }) => {
-      if (selectedToken?.symbol === "vETH") {
-        writeContract({
-          address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
-          abi: vethAbi,
-          functionName: "depositWithETH",
-          value: parseEther(value.amount),
-        });
-      }
+      console.log(value);
+      // if (selectedToken?.symbol === "vETH") {
+      //   writeContract({
+      //     address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
+      //     abi: vethAbi,
+      //     functionName: "depositWithETH",
+      //     value: parseEther(value.amount),
+      //   });
+      // }
     },
   });
 
@@ -106,10 +93,46 @@ export default function MintComponent() {
     });
 
   return (
-    <div className="flex flex-col gap-4 w-full p-4">
+    <div className="flex flex-col gap-4 w-full p-4 border-2 border-primary rounded-none">
+      <div className="flex flex-col gap-2 pb-8">
+        <h1 className="text-2xl font-bold">Portfolio</h1>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-row gap-2 items-center justify-between">
+            <div className="flex flex-row gap-2 items-center justify-center">
+              <Image src="/eth.svg" alt="ETH" width={24} height={24} />
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-row gap-2 items-center justify-center">
+                  <p className="text-lg">ETH</p>
+                  <p className="text-muted-foreground">Mainnet</p>
+                </div>
+              </div>
+            </div>
+            {isLoadingNativeBalance ? (
+              <Skeleton className="w-12 h-4" />
+            ) : (
+              <p>{formatEther(nativeBalance?.value ?? BigInt(0))}</p>
+            )}
+          </div>
+          <div className="flex flex-row gap-2 items-center justify-between">
+            <div className="flex flex-row gap-2 items-center justify-center">
+              <Image src="/veth.svg" alt="vETH" width={24} height={24} />
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-row gap-2 items-center justify-center">
+                  <p className="text-lg">vETH</p>
+                  <p className="text-muted-foreground">Mainnet</p>
+                </div>
+              </div>
+            </div>
+            {isLoadingTokenBalances ? (
+              <Skeleton className="w-12 h-4" />
+            ) : (
+              <p>{formatEther(tokenBalances?.[0]?.result ?? BigInt(0))}</p>
+            )}
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">Mint</h1>
-        <p className="text-muted-foreground">Mint Liquid Staking Tokens</p>
+        <h1 className="text-2xl font-bold">Stake ETH for vETH</h1>
       </div>
       <form
         onSubmit={(e) => {
@@ -119,23 +142,6 @@ export default function MintComponent() {
         }}
       >
         <div className="flex flex-col gap-4">
-          <Select
-            onValueChange={(value) => {
-              const token = tokens.find((token) => token.symbol === value);
-              if (token) {
-                setSelectedToken(token);
-              }
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a token" />
-            </SelectTrigger>
-            <SelectContent>
-              {tokens.map((token) => (
-                <SelectMintToken key={token.symbol} token={token} />
-              ))}
-            </SelectContent>
-          </Select>
           <div className="flex flex-col gap-2 rounded-lg border p-4">
             <div>
               {/* A type-safe field component*/}
@@ -158,7 +164,7 @@ export default function MintComponent() {
                 {(field) => (
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 items-center justify-between">
-                      <p className="text-muted-foreground">Minting</p>
+                      <p className="text-muted-foreground">You stake</p>
                       <button className="bg-transparent border border-muted-foreground text-muted-foreground rounded-md px-2 py-0.5 hover:cursor-pointer">
                         Max
                       </button>
@@ -190,33 +196,8 @@ export default function MintComponent() {
                         />
                       )}
                       <p className="place-self-end text-lg text-muted-foreground">
-                        {selectedToken?.symbol === "vETH"
-                          ? "ETH"
-                          : selectedToken?.symbol === "vDOT"
-                          ? "DOT"
-                          : "-"}
+                        ETH
                       </p>
-                    </div>
-                    <div className="flex flex-row gap-2">
-                      {selectedToken?.symbol === "vETH" ? (
-                        <p className="text-muted-foreground">
-                          {roundLongDecimals(
-                            formatEther(nativeBalance?.value ?? BigInt(0)),
-                            6
-                          )}{" "}
-                          ETH
-                        </p>
-                      ) : selectedToken?.symbol === "vDOT" ? (
-                        <p className="text-muted-foreground">
-                          {roundLongDecimals(
-                            formatEther(tokenBalances?.[0]?.result ?? BigInt(0)),
-                            6
-                          )}{" "}
-                          DOT
-                        </p>
-                      ) : (
-                        <p className="text-muted-foreground">-</p>
-                      )}
                     </div>
                     <FieldInfo field={field} />
                   </div>
@@ -232,18 +213,14 @@ export default function MintComponent() {
                 size="lg"
                 className="hover:cursor-pointer text-lg font-bold"
                 type="submit"
-                disabled={
-                  !canSubmit ||
-                  isSubmitting ||
-                  isPending
-                }
+                disabled={!canSubmit || isSubmitting || isPending}
               >
                 {isSubmitting || isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Please confirm in wallet
                   </>
-                ) :  (
+                ) : (
                   <>Mint</>
                 )}
               </Button>
