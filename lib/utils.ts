@@ -35,3 +35,38 @@ export function formatNumberStringWithThousandSeparators(value: string) {
 
   return Number(value).toLocaleString();
 }
+
+export function formatCurrencyValue(value: string) {
+  const num = parseFloat(value);
+
+  if (isNaN(num)) return value;
+
+  const absNum = Math.abs(num);
+  const sign = num < 0 ? "-" : "";
+
+  const formatWithSuffix = (n: number, divisor: number, suffix: string) => {
+    const divided = n / divisor;
+    const floored = Math.floor(divided * 10) / 10;
+    const hasRemainder = divided !== floored;
+    const formatted = floored.toFixed(1).replace(/\.0$/, "");
+    return `${sign}$${formatted}${suffix}${hasRemainder ? "+" : ""}`;
+  };
+
+  // Billions
+  if (absNum >= 1_000_000_000) {
+    return formatWithSuffix(absNum, 1_000_000_000, "B");
+  }
+
+  // Millions
+  if (absNum >= 1_000_000) {
+    return formatWithSuffix(absNum, 1_000_000, "M");
+  }
+
+  // Thousands
+  if (absNum >= 1_000) {
+    return formatWithSuffix(absNum, 1_000, "K");
+  }
+
+  // Less than 1000
+  return `${sign}$${absNum.toFixed(2).replace(/\.00$/, "")}`;
+}

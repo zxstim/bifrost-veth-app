@@ -1,17 +1,55 @@
+"use client";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { formatCurrencyValue } from "@/lib/utils";
+
 export default function VethOnchainInfo() {
+  // Queries
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["veth-onchain-info"],
+    queryFn: async () => {
+      const response = await fetch("https://dapi.bifrost.io/api/site");
+      if (!response.ok) {
+        throw new Error("Failed to fetch vETH onchain info");
+      }
+      return response.json();
+    },
+  });
+
   return (
     <div className="grid grid-cols-3 border-t-2 border-muted-foreground/20 pt-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-lg text-muted-foreground">Total Value Locked</h1>
-        <p className="font-bold text-4xl">$2M+</p>
+        {isLoading ? (
+          <Skeleton className="w-full h-4" />
+        ) : isError ? (
+          <p className="font-bold text-4xl">$--</p>
+        ) : (
+          <p className="font-bold text-4xl">
+            {formatCurrencyValue(data?.["vETH"]["tvl"])}
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <h1 className="text-lg text-muted-foreground">Total stakers</h1>
-        <p className="font-bold text-4xl">628</p>
+        {isLoading ? (
+          <Skeleton className="w-full h-4" />
+        ) : isError ? (
+          <p className="font-bold text-4xl">--</p>
+        ) : (
+          <p className="font-bold text-4xl">{data?.["vETH"]["holders"]}</p>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <h1 className="text-lg text-muted-foreground">Current APY</h1>
-        <p className="font-bold text-4xl">21%</p>
+        {isLoading ? (
+          <Skeleton className="w-full h-4" />
+        ) : isError ? (
+          <p className="font-bold text-4xl">--%</p>
+        ) : (
+          <p className="font-bold text-4xl">{data?.["vETH"]["apyBase"]}%</p>
+        )}
       </div>
     </div>
   );
