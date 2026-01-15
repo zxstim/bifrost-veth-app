@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseEther, formatEther, Address, erc20Abi } from "viem";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Loader2, RefreshCcw } from "lucide-react";
+import { Loader2, RefreshCcw, ChevronRight } from "lucide-react";
 import { TransactionStatus } from "@/components/transaction-status";
 import { vethAbi } from "@/lib/abis";
 
@@ -122,7 +122,7 @@ export default function MintComponent() {
           </Button>
         </div>
         <div className="flex flex-col gap-2">
-          <div className="flex flex-row gap-2 items-center justify-between">
+          <div className="flex flex-col lg:flex-row gap-2 items-start lg:items-center lg:justify-between">
             <div className="flex flex-row gap-2 items-center justify-center">
               <Image src="/eth.svg" alt="ETH" width={24} height={24} />
               <div className="flex flex-col gap-2">
@@ -138,13 +138,16 @@ export default function MintComponent() {
                 </div>
               </div>
             </div>
-            {isLoadingNativeBalance ? (
-              <Skeleton className="w-12 h-4" />
-            ) : (
-              <p>{formatEther(nativeBalance?.value ?? BigInt(0))}</p>
-            )}
+            <div className="flex flex-row items-center justify-center text-left lg:text-right gap-2">
+              <ChevronRight className="w-4 h-4 lg:hidden" />
+              {isLoadingNativeBalance ? (
+                <Skeleton className="w-12 h-4" />
+              ) : (
+                <p>{formatEther(nativeBalance?.value ?? BigInt(0))}</p>
+              )}
+            </div>
           </div>
-          <div className="flex flex-row gap-2 items-center justify-between">
+          <div className="flex flex-col lg:flex-row gap-2 items-start lg:items-center lg:justify-between">
             <div className="flex flex-row gap-2 items-center justify-center">
               <Image src="/veth.svg" alt="vETH" width={24} height={24} />
               <div className="flex flex-col gap-2">
@@ -160,11 +163,14 @@ export default function MintComponent() {
                 </div>
               </div>
             </div>
-            {isLoadingVethData ? (
-              <Skeleton className="w-12 h-4" />
-            ) : (
-              <p>{formatEther(vethData?.[0]?.result ?? BigInt(0))}</p>
-            )}
+            <div className="flex flex-row items-center justify-center text-left lg:text-right gap-2">
+              <ChevronRight className="w-4 h-4 lg:hidden" />
+              {isLoadingVethData ? (
+                <Skeleton className="w-12 h-4" />
+              ) : (
+                <p>{formatEther(vethData?.[0]?.result ?? BigInt(0))}</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -290,7 +296,9 @@ export default function MintComponent() {
                 size="lg"
                 className="hover:cursor-pointer text-lg font-bold rounded-none"
                 type="submit"
-                disabled={!canSubmit || isSubmitting || isPending || isConfirming}
+                disabled={
+                  !canSubmit || isSubmitting || isPending || isConfirming
+                }
               >
                 {isSubmitting || isPending ? (
                   <>
