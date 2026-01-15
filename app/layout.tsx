@@ -9,14 +9,14 @@ import Header from "@/components/header";
 const jetBrainsMono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bifrost SLPX App",
-  description: "A app to interact with Bifrost SLPX protocol",
-  metadataBase: new URL("https://slpx.zxstim.com"),
+  title: "Bifrost vETH App",
+  description: "A app to interact with Bifrost vETH protocol",
+  metadataBase: new URL("https://veth.zxstim.com"),
   openGraph: {
-    title: "Bifrost SLPX App",
-    description: "A app to interact with Bifrost SLPX protocol",
-    url: "https://slpx.zxstim.com",
-    siteName: "Bifrost SLPX App",
+    title: "Bifrost vETH App",
+    description: "A app to interact with Bifrost vETH protocol",
+    url: "https://veth.zxstim.com",
+    siteName: "Bifrost vETH App",
     images: [
       {
         url: "/bifrost-full-mono.svg",
