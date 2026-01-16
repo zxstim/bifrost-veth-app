@@ -1,5 +1,6 @@
 import MintComponent from "@/components/mint-component";
 import VethData from "@/components/veth-data";
+import RecentDeposits from "@/components/recent-deposits";
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
         </div>
         <MintComponent />
       </div>
+      <RecentDeposits />
     </div>
   );
 }
